@@ -1,4 +1,3 @@
-from __future__ import print_function
 from base64 import urlsafe_b64decode
 import os.path
 import re
@@ -50,17 +49,24 @@ def main():
         messages = service.users().messages().list(userId='me').execute()
 
         print('Messages:')
-        for message in messages['messages'][0:1]:
+        for message in messages['messages'][50:61]:
             msg = service.users().messages().get(userId='me', id=message['id']).execute()
             print(msg['snippet'])
             for part in msg['payload']['parts'][0:1]:
                 if part['mimeType'] == 'text/plain':
-                    print('Text:')
-                    print(decodestring(urlsafe_b64decode(part['body']['data'])).decode('utf-8'))
+                    print('\nText:\n')
+                    try:
+                        print(decodestring(urlsafe_b64decode(part['body']['data'])).decode('utf-8'))
+                    except UnicodeDecodeError as error:
+                        print('error:', error)
+                        print(decodestring(urlsafe_b64decode(part['body']['data'])).decode('iso-8859-2'))
                 elif part['mimeType'] == 'text/html':
-                    print('HTML:')
-                    html = decodestring(urlsafe_b64decode(part['body']['data'])).decode('utf-8')
-                    print(html2text.html2text(html))
+                    print('\nHTML:\n')
+                    try:
+                        print(html2text.html2text(decodestring(urlsafe_b64decode(part['body']['data'])).decode('utf-8')))
+                    except UnicodeDecodeError as error:
+                        print('error:', error)
+                        print(html2text.html2text(decodestring(urlsafe_b64decode(part['body']['data'])).decode('iso-8859-2')))
         
 
     except HttpError as error:
