@@ -40,7 +40,7 @@ def main():
                 f'{PATH}/credentials.json', SCOPES)
             creds = flow.run_local_server(port=0)
         # Save the credentials for the next run
-        with open(f'{PATH}/token.json', 'w') as token:
+        with open(f'{PATH}/token.json', 'w', encoding='utf-8') as token:
             token.write(creds.to_json())
 
     try:
@@ -52,23 +52,29 @@ def main():
         for message in messages['messages'][50:61]:
             msg = service.users().messages().get(userId='me', id=message['id']).execute()
             print(msg['snippet'])
-            for part in msg['payload']['parts'][0:1]:
-                if part['mimeType'] == 'text/plain':
-                    print('\nText:\n')
-                    try:
-                        print(decodestring(urlsafe_b64decode(part['body']['data'])).decode('utf-8'))
-                    except UnicodeDecodeError as error:
-                        print('error:', error)
-                        print(decodestring(urlsafe_b64decode(part['body']['data'])).decode('iso-8859-2'))
-                elif part['mimeType'] == 'text/html':
-                    print('\nHTML:\n')
-                    try:
-                        print(html2text.html2text(decodestring(urlsafe_b64decode(part['body']['data'])).decode('utf-8')))
-                    except UnicodeDecodeError as error:
-                        print('error:', error)
-                        print(html2text.html2text(decodestring(urlsafe_b64decode(part['body']['data'])).decode('iso-8859-2')))
+            if 'parts' in msg['payload']:
+                for part in msg['payload']['parts'][0:1]:
+                    if part['mimeType'] == 'text/plain':
+                        print('\nText:\n')
+                        try:
+                            print(decodestring(urlsafe_b64decode(part['body']['data']))
+                            .decode('utf-8'))
+                        except UnicodeDecodeError as error:
+                            print('error:', error)
+                            print(decodestring(urlsafe_b64decode(part['body']['data']))
+                            .decode('iso-8859-2'))
+                    elif part['mimeType'] == 'text/html':
+                        print('\nHTML:\n')
+                        try:
+                            print(html2text.html2text(
+                                decodestring(urlsafe_b64decode(part['body']['data']))
+                                .decode('utf-8')))
+                        except UnicodeDecodeError as error:
+                            print('error:', error)
+                            print(html2text.html2text(
+                                decodestring(urlsafe_b64decode(part['body']['data']))
+                                .decode('iso-8859-2')))
         
-
     except HttpError as error:
         # TODO(developer) - Handle errors from gmail API.
         print(f'An error occurred: {error}')
